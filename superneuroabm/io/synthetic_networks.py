@@ -316,13 +316,17 @@ def generate_clustered_network_constant_comm(
                 # so instead we compute how many targets we need, and test until we get them
                 targets_desired = min(intra_cluster_degree, len(cluster_neurons)-1)
                 num_targets = 0
+                seen_indices = set()
+                seen_indices.add(pre)
 
                 # keep trying to find a non-self post neuron
                 while num_targets < targets_desired:
-                    # np.array needs to conver the list to a numpy array, built-in random does not
+                    # np.array needs to convert the list to a numpy array, built-in random does not
                     post = random.choice(cluster_neurons)
 
-                    if post != pre:
+                    if post not in seen_indices:
+                        seen_indices.add(post)
+
                         pre_type = graph.nodes[pre]["type"]
                         weight = weight_exc if pre_type == "excitatory" else weight_inh
 
@@ -402,7 +406,11 @@ def generate_clustered_network_constant_comm(
                     seen_indices.add(test_edge)
                     new_edges += 1
 
-                    pre, post = divmod(test_edge, len_post)
+                    # divmod gives us local indicies
+                    ipre, ipost = divmod(test_edge, len_post)
+                    # retrieve the global indicies
+                    pre = pre_ids[ipre]
+                    post = post_ids[ipost]
 
                     pre_type = graph.nodes[pre]["type"]
                     weight = weight_exc if pre_type == "excitatory" else weight_inh
